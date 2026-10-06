@@ -10,8 +10,8 @@
 /* Layout: one dark vault stage — a horizontal reel of brushed-metal prize cards under a center pointer; prize-pool editor and history below. Single deliberate dark look. */
 :root{
   color-scheme:dark;
-  --bg:#06191a; --bg2:#0a2324; --panel:#0c2526; --line:#1d3a3b; --line2:#2b4c4d;
-  --fg:#eaf3f1; --muted:#86a3a0; --dim:#5b7775;
+  --bg:#120922; --bg2:#22123d; --panel:#1a0f2f; --line:#2e1c4b; --line2:#46306b;
+  --fg:#f1ecf8; --muted:#a898c4; --dim:#7a6a9c;
   --lime:#c8f56a; --lime-ink:#0b1d05;
   --r-common:#b9c2c2; --r-rare:#5fb6ff; --r-epic:#b88bff; --r-legend:#ffc54d; --r-mythic:#c8f56a;
   --f-body:"Noto Sans SC",system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
@@ -134,7 +134,7 @@ details.panel>summary small{color:var(--muted);font-weight:400;font-size:12px}
 details.panel:not([open]){gap:0}
 
 /* Result modal */
-.modal{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(2,10,10,.72);backdrop-filter:blur(6px)}
+.modal{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(10,4,20,.75);backdrop-filter:blur(6px)}
 .sheet{background:var(--panel);border:1px solid var(--line2);border-radius:22px;padding:28px 24px 22px;display:flex;flex-direction:column;align-items:center;gap:16px;width:min(380px,100%);text-align:center;animation:rise .45s cubic-bezier(.2,1.4,.4,1)}
 .sheet .eyebrow{font-size:12px;letter-spacing:.3em;color:var(--muted)}
 .sheet h3{margin:0;font-size:24px;font-weight:900}
@@ -395,7 +395,7 @@ function loop(){cx.clearRect(0,0,cv.width,cv.height);parts=parts.filter(p=>p.lif
   raf=parts.length?requestAnimationFrame(loop):(cx.clearRect(0,0,cv.width,cv.height),0);}
 
 /* ---------- Wiring ---------- */
-let tt;function toast(m){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.style.cssText="position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#eaf3f1;color:#06191a;padding:8px 16px;border-radius:999px;font-size:14px;font-weight:700;z-index:50";document.body.appendChild(t);}t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,1900);}
+let tt;function toast(m){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.style.cssText="position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#f1ecf8;color:#120922;padding:8px 16px;border-radius:999px;font-size:14px;font-weight:700;z-index:50";document.body.appendChild(t);}t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,1900);}
 $("#spin").onclick=spin;
 $("#skip").onclick=skip;
 document.addEventListener("keydown",e=>{
