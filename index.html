@@ -112,6 +112,27 @@ td.pct{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap;t
 .empty{color:var(--dim);font-size:14px;margin:0}
 .c-common{--rc2:var(--r-common)}.c-rare{--rc2:var(--r-rare)}.c-epic{--rc2:var(--r-epic)}.c-legend{--rc2:var(--r-legend)}.c-mythic{--rc2:var(--r-mythic)}
 
+
+/* Prize showcase */
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font:inherit;font-size:13px;font-weight:700;color:var(--muted);background:transparent;border:0;border-radius:999px;padding:6px 14px;cursor:pointer}
+.tab:hover{color:var(--fg)}
+.tab[aria-selected=true]{background:var(--line2);color:var(--fg)}
+.show-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.tile{--cw:92px;--ch:122px;--gap:0px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:10px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
+.tile .p{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+.tile .item{gap:10px;flex:none}
+.tile .item .label{width:100%;max-width:130px;font-size:13px}
+.tile .card .meta b{font-size:20px}
+/* Collapsible settings */
+details.panel>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:15px;font-weight:700}
+details.panel>summary::-webkit-details-marker{display:none}
+details.panel>summary .chev{display:inline-block;margin-right:8px;color:var(--muted);transition:transform .2s}
+details.panel[open]>summary .chev{transform:rotate(90deg)}
+details.panel>summary small{color:var(--muted);font-weight:400;font-size:12px}
+details.panel:not([open]){gap:0}
+
 /* Result modal */
 .modal{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(2,10,10,.72);backdrop-filter:blur(6px)}
 .sheet{background:var(--panel);border:1px solid var(--line2);border-radius:22px;padding:28px 24px 22px;display:flex;flex-direction:column;align-items:center;gap:16px;width:min(380px,100%);text-align:center;animation:rise .45s cubic-bezier(.2,1.4,.4,1)}
@@ -166,17 +187,12 @@ canvas#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
 
   <div class="lower">
     <div class="panel">
-      <h2>奖池设置 <small id="poolSum"></small></h2>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>奖品名称</th><th>类别</th><th>大字</th><th>小字</th><th>图标</th><th>稀有度</th><th>权重</th><th style="text-align:right">概率</th><th></th></tr></thead>
-          <tbody id="rows"></tbody>
-        </table>
+      <div class="show-head">
+        <h2 style="margin:0">奖品一览</h2>
+        <small style="color:var(--muted);font-size:12px" id="showCount"></small>
       </div>
-      <div class="row-actions">
-        <button class="ghost" id="add">＋ 添加奖品</button>
-        <button class="ghost" id="restore">恢复示例奖池</button>
-      </div>
+      <div class="tabs" id="tabs" role="tablist"></div>
+      <div class="grid" id="grid"></div>
     </div>
     <div class="panel">
       <h2>抽奖记录 <small id="histCount"></small></h2>
@@ -184,6 +200,20 @@ canvas#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
       <div class="row-actions"><button class="ghost" id="clearHist">清空记录</button><span id="clearConfirm"></span></div>
     </div>
   </div>
+
+  <details class="panel" id="poolPanel">
+    <summary><span><span class="chev">▸</span>奖池设置</span><small id="poolSum"></small></summary>
+    <div class="tbl-wrap" style="margin-top:12px">
+      <table>
+        <thead><tr><th>奖品名称</th><th>类别</th><th>大字</th><th>小字</th><th>图标</th><th>稀有度</th><th>权重</th><th style="text-align:right">概率</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="row-actions" style="margin-top:12px">
+      <button class="ghost" id="add">＋ 添加奖品</button>
+      <button class="ghost" id="restore">恢复示例奖池</button>
+    </div>
+  </details>
 </div>
 
 <div class="modal" id="modal" hidden>
@@ -287,6 +317,23 @@ $("#close").onclick=hideModal;
 $("#again").onclick=()=>{hideModal();spin();};
 $("#modal").onclick=e=>{if(e.target.id==="modal")hideModal();};
 
+
+/* ---------- Showcase ---------- */
+const ORDER=["mythic","legend","epic","rare","common"];
+let tab="all";
+function pctStr(v){if(v<=0)return"0%";if(v>=1)return v.toFixed(2).replace(/\.?0+$/,"")+"%";const d=Math.max(2,1-Math.floor(Math.log10(v)));return v.toFixed(d).replace(/0+$/,"")+"%";}
+function renderShow(){
+  const t=total();
+  const counts={};st.prizes.forEach(p=>counts[p.rar]=(counts[p.rar]||0)+1);
+  const keys=["all",...ORDER.filter(k=>counts[k])];if(!keys.includes(tab))tab="all";
+  $("#tabs").innerHTML=keys.map(k=>`<button class="tab" role="tab" data-k="${k}" aria-selected="${k===tab}">${k==="all"?"全部":RAR[k]}</button>`).join("");
+  $("#tabs").querySelectorAll(".tab").forEach(b=>b.onclick=()=>{tab=b.dataset.k;renderShow();});
+  const list=st.prizes.map((p,i)=>({p,i})).filter(o=>tab==="all"||o.p.rar===tab)
+    .sort((a,b)=>ORDER.indexOf(a.p.rar)-ORDER.indexOf(b.p.rar)||(+a.p.w||0)-(+b.p.w||0));
+  $("#showCount").textContent=`${list.length} 件奖品`;
+  $("#grid").innerHTML=list.map(({p})=>{const v=t>0?Math.max(0,+p.w||0)/t*100:0;return `<div class="tile"><span class="p">${pctStr(v)}</span>${itemHTML(p)}</div>`;}).join("");
+}
+
 /* ---------- Editor ---------- */
 function renderRows(){
   const t=total();const tb=$("#rows");tb.innerHTML="";
@@ -304,9 +351,10 @@ function renderRows(){
     tr.querySelector(".del").onclick=()=>{if(st.prizes.length<=1)return toast("奖池里至少要有一个奖品");st.prizes.splice(i,1);lastIdx=null;save();renderRows();idle();};
   });
   $("#poolSum").textContent=`${st.prizes.length} 种奖品 · 总权重 ${+t.toFixed(2)}`;
+  renderShow();
 }
 let et;function edited(w){if(w){const t=total();st.prizes.forEach((p,i)=>{const pct=t>0?(Math.max(0,+p.w||0)/t*100):0;const el=$("#pc"+i);if(el)el.textContent=pct.toFixed(pct<1?2:1)+"%";});$("#poolSum").textContent=`${st.prizes.length} 种奖品 · 总权重 ${+t.toFixed(2)}`;}
-  clearTimeout(et);et=setTimeout(idle,350);}
+  clearTimeout(et);et=setTimeout(()=>{idle();renderShow();},350);}
 $("#add").onclick=()=>{st.prizes.push({name:"新奖品",cat:"奖品",big:"1x",sub:"",icon:"gift",rar:"common",w:10});save();renderRows();idle();const i=st.prizes.length-1;$("#n"+i).focus();$("#n"+i).select();};
 $("#restore").onclick=()=>{st.prizes=SAMPLE.map(p=>({...p}));lastIdx=null;save();renderRows();idle();toast("已恢复示例奖池");};
 
@@ -355,7 +403,7 @@ document.addEventListener("keydown",e=>{
   if(e.code!=="Space")return;const tg=e.target.tagName;if(["INPUT","SELECT","TEXTAREA","BUTTON"].includes(tg))return;
   e.preventDefault();if(!$("#modal").hidden){hideModal();spin();return;}if(spinning)skip();else spin();});
 let rt;addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>{if(spinning)return;measure();setX(centerX(Math.max(0,focusIdx)));},120);});
-syncSound();renderRows();renderHist();idle();
+syncSound();renderRows();renderShow();renderHist();idle();
 document.fonts&&document.fonts.ready.then(()=>{if(!spinning){measure();setX(centerX(Math.max(0,focusIdx)));}});
 </script>
 
